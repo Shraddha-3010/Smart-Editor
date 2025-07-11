@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+  <title>Editor Layout</title>
+ <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}">
+
+</head>
+<body>
+    <div id="menubar">
+  <div class="menu-item">File
+    <div class="submenu">
+      <div onclick="createNewProject()">New Project</div>
+      <div onclick="addFile()">New File</div>
+      <div onclick="document.getElementById('fileInput').click()">Open File...</div>
+      <div onclick="saveCurrentFile()">Save</div>
+      <div onclick="saveAs()">Save As...</div>
+      <div onclick="exportProject()">Export Project</div>
+      <div onclick="renameProject()">Rename Project</div>
+      <div onclick="listRecentProjects()">Recent Projects</div>
+      <div onclick="printFile()">Print</div>
+      <div onclick="exitEditor()">Exit</div>
+    </div>
+  </div>
+    <button id="themeToggleBtn" onclick="toggleTheme()">🌙Dark</button>
+
+
+
+        <div class="user-avatar-menu">
+      <img src="https://ui-avatars.com/api/?name={{ session['user'][0]|upper }}" class="avatar-icon" onclick="toggleUserMenu()" />
+      <div id="user-dropdown" class="user-dropdown hidden">
+        <div onclick="location.href='/profile'">👤 Profile</div>
+        <div onclick="location.href='/edit-profile'">✏️ Edit Profile</div>
+        <div onclick="location.href='/logout'">🚪 Logout</div>
+      </div>
+    </div>
+  </div>
+    <!-- Add other menus here if needed -->
+
+
+  <!-- Monaco Editor Container -->
+  <div id="editor" style="height: 0vh; width: 100%;"></div>
+
+
+
+
+    <input type="hidden" id="current_file" />
+
+    <div style="padding: 5px; height: 40px; background:grey;">
+        <h2>Smart Editor</h2>
+    </div>
+
+
+
+  <div class="editor-container resizable-container">
+    <aside class="left-panel">
+      <h3>Files</h3>
+    <div class="file-actions">
+<!--      <button class="add-file-btn" onclick="addFile()">+ Add File</button>-->
+<!--      <button class="open-file-btn" onclick="document.getElementById('fileInput').click()">Open File</button>-->
+       <button onclick="saveCurrentFile()">Save</button>
+      </div>
+        <input type="file" id="fileInput" style="display:none" onchange="openFile(event)">
+     <ul class="file-list" id="filelist">
+          {% for file in savedfiles %}
+            <li onclick="window.loadFileContent('{{ file }}')">{{ loop.index }}.{{ file }}</li>
+          {% endfor %}
+          <li onclick="window.loadFileContent('test.py')">{{ savedfiles|length + 1 }}.app.py</li>
+     </ul>
+
+    </aside>
+
+    <main class="middle-panel">
+     <div class="tab-bar" id="tab-bar">
+        <button id="run-button" onclick="runCode()" title="Run Code" style="background:none; border:none; cursor:pointer;">
+          <i data-lucide="play-circle" style="width:30px; height:30px; color:white;"></i>
+        </button>
+     </div>
+
+      <div id="code-editor" style="width:700px;height:400px;border:1px solid grey"></div>
+
+          <!-- Output Panel -->
+
+        <div id="output-panel" style="height:180px; margin-top:5px; padding:5px; background:#1e1e1e; color:#d4d4d4; overflow:auto; font-family:monospace; font-size:14px;">
+        <strong>Output:</strong>
+        <pre id="result" style="white-space:pre-wrap;"></pre>
+      </div>
+    </main>
+
+    <aside class="right-panel">
+
+<!--        <div id="ai-response">-->
+<!--          <div class="ai-box" id="response-list">-->
+<!--        </div>-->
+        <div class="ai-box">
+        <h4>AI Prompt</h4>
+        <textarea id="ai-input" placeholder="Type your prompt..." rows="4"></textarea>
+        <button onclick="submitAIPrompt()">Submit</button>
+
+          </div>
+             <div id="ai-response">
+    <div id="response-list" class="response-list"></div>
+  </div>
+<!--        </div>-->
+    </aside>
+  </div>
+
+  <div id="dragbar" style="height: 5px; cursor: row-resize; background: #666;"></div> <!-- Made visible --><script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.22.3/min/vs/loader.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>-->
+<!-- <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />-->
+<!--  <script defer src="https://pyscript.net/alpha/pyscript.js"></script>-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+
+
+<script>
+  let editor;
+const openTabs = {};
+let currentTab = null;
+
+
+let pyodideReady = false;
+
+async function loadPyodideAndPackages() {
+  if (!pyodideReady) {
+    self.pyodide = await loadPyodide();
+    pyodideReady = true;
+  }
+}
+
+
+// Load Monaco
+require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.22.3/min/vs' } });
+require(['vs/editor/editor.main'], function () {
+  editor = monaco.editor.create(document.getElementById('code-editor'), {
+    value: '',
+    language: 'python'
+  });
+});
+
+
+ async function createNewProject() {
+      const name = prompt("Enter project name:");
+      if (name) await fetch('/new_project', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name}) });
+    }
+
+    async function newFile() {
+      const name = prompt("Enter new file name:");
+      if (name) await fetch('/new_file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name}) });
+    }
+
+    async function openFile() {
+      const name = prompt("Enter file name to open:");
+      if (name) {
+        const res = await fetch(`/open_file?name=${name}`);
+        const data = await res.text();
+        editor.setValue(data);
+      }
+    }
+
+    async function saveFile() {
+      const content = editor.getValue();
+      const name = prompt("Enter current file name:");
+      if (name) await fetch('/save_file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name, content}) });
+    }
+
+    async function saveAs() {
+      const content = editor.getValue();
+      const name = prompt("Save as filename:");
+      if (name) await fetch('/save_as', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name, content}) });
+    }
+
+    async function exportProject() {
+       fetch('/export-project')
+    .then(response => response.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'project.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    })
+    .catch(err => alert('Failed to export: ' + err));
+    }
+
+ async function renameProject() {
+       const newName = prompt("Enter new project name:");
+  if (!newName) return;
+
+  fetch('/rename-project', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ new_name: newName })
+  })
+  .then(res => res.json())
+  .then(data => alert(data.message || "Project renamed successfully"))
+  .catch(err => alert("Error renaming project: " + err));
+}
+
+  async function listRecentProjects() {
+      fetch('/recent-projects')
+    .then(res => res.json())
+    .then(projects => {
+      let list = projects.map(p => `<li onclick="loadProject('${p}')">${p}</li>`).join('');
+      const modal = document.createElement('div');
+      modal.innerHTML = `<div class="modal">
+        <h3>Recent Projects</h3>
+        <ul>${list}</ul>
+        <button onclick="this.parentNode.remove()">Close</button>
+      </div>`;
+      document.body.appendChild(modal);
+    });
+}
+
+        function loadProject(name) {
+          fetch(`/load-project/${name}`).then(() => location.reload());
+}
+
+    function printFile() {
+      const content = editor.getValue();
+      const win = window.open('', '', 'height=400,width=600');
+      win.document.write('<pre>' + content + '</pre>');
+      win.print();
+    }
+
+    function exitEditor() {
+    if (confirm("Are you sure you want to exit? Unsaved changes may be lost.")) {
+    window.location.href = "/login"; // or: window.close();
+  }
+ }
+
+
+
+
+
+
+
+
+
+// Enable after Monaco ready
+window.addFile = function () {
+  const fileName = prompt("Enter new file name:");
+  if (fileName) {
+    const li = document.createElement('li');
+    const list = document.querySelectorAll('.file-list li').length + 1;
+    li.textContent = `${list}. ${fileName}`;
+    li.onclick = () => loadFileContent(fileName);
+    document.querySelector('.file-list').appendChild(li);
+    createTab(fileName, "");
+  }
+};
+
+window.postContent = function (file_name, file_content) {
+  fetch('/new-content', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename: file_name, content: file_content })
+  })
+    .then(response => response.text())
+    .then(data => {
+      alert("File saved successfully!");
+      const li = document.createElement('li');
+      const list = document.querySelectorAll('.file-list li').length + 1;
+      li.textContent = `${list}. ${file_name}`;
+      li.onclick = () => loadFileContent(file_name);
+      document.querySelector('.file-list').appendChild(li);
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      alert("Error saving file.");
+    });
+};
+
+window.openFile = function (event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const content = e.target.result;
+      createTab(file.name, content);
+      postContent(file.name, content);
+    };
+    reader.readAsText(file);
+  }
+};
+
+function createTab(filename, content) {
+  if (openTabs[filename]) {
+    switchToTab(filename);
+    return;
+  }
+  const model = monaco.editor.createModel(content, 'python');
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.textContent = filename;
+
+  const closeBtn = document.createElement('span');
+  closeBtn.textContent = ' ×';
+  closeBtn.className = 'close';
+  closeBtn.onclick = function (e) {
+    e.stopPropagation();
+    closeTab(filename);
+  };
+
+  tab.appendChild(closeBtn);
+  tab.onclick = () => switchToTab(filename);
+  document.getElementById('tab-bar').appendChild(tab);
+
+  openTabs[filename] = { model, tabElement: tab };
+  switchToTab(filename);
+}
+
+function switchToTab(filename) {
+  if (!openTabs[filename]) return;
+  editor.setModel(openTabs[filename].model);
+  currentTab = filename;
+  document.getElementById("current_file").value = filename;
+
+  Object.values(openTabs).forEach(tab => tab.tabElement.classList.remove('active'));
+  openTabs[filename].tabElement.classList.add('active');
+}
+
+function closeTab(filename) {
+  if (!openTabs[filename]) return;
+  openTabs[filename].model.dispose();
+  openTabs[filename].tabElement.remove();
+  delete openTabs[filename];
+
+  if (currentTab === filename) {
+    const remaining = Object.keys(openTabs);
+    if (remaining.length > 0) {
+      switchToTab(remaining[0]);
+    } else {
+      editor.setValue('');
+      currentTab = null;
+      document.getElementById("current_file").value = '';
+    }
+  }
+}
+
+function addResponse(data, dataType, code = "") {
+  const resList = document.getElementById('response-list');
+  const text = document.createElement('div');
+  text.style.padding = '10px';
+  text.style.marginBottom = '10px';
+  text.style.borderRadius = '6px';
+
+  if (dataType === "prompt") {
+    text.style.backgroundColor = '	#20B2AA';
+    text.innerHTML = `<strong>User:</strong> ${data}`;
+  } else {
+    text.style.backgroundColor = '#66CDAA';
+    text.innerHTML = `
+      <strong>AI:</strong>
+      <pre style="background-color: #3CB371">
+        <code class="language-python">${code}</code>
+        <button value='${code}' onclick="insertCode(this.value)">Insert</button>
+      </pre>
+      ${data}`;
+  }
+
+  resList.appendChild(text);
+}
+
+function insertCode(code) {
+  //alert(code)
+  if (currentTab && openTabs[currentTab]) {
+    const model = openTabs[currentTab].model;
+    const selection = editor.getSelection();
+    model.pushEditOperations([], [{
+      range: selection,
+      text: code
+    }], () => null);
+  }
+}
+
+async function submitAIPrompt() {
+  const loader = document.getElementById("ai-loader");
+  loader.style.display = "flex";
+
+  try {
+    const prompt = document.getElementById("ai-input").value;
+    addResponse(prompt, "prompt");
+    document.getElementById("ai-input").value = "";
+
+    let context = "";
+    if (currentTab && openTabs[currentTab]) {
+      const selection = editor.getSelection();
+      context = openTabs[currentTab].model.getValueInRange(selection);
+    }
+    //alert(prompt)
+   // alert(context)
+    const response = await fetch('/ai-prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, context })
+    });
+
+    const data = await response.json();
+    if (data.status === 'success') {
+       // alert( data.code)
+      addResponse(data.result, "Response", data.code);
+    } else {
+      addResponse(`Error: ${data.message}`, "Response");
+    }
+  } catch (error) {
+    console.error("AI Request Failed:", error);
+    addResponse("Request failed.", "Response");
+  } finally {
+    loader.style.display = "none";
+  }
+}
+
+window.customInput = async function(promptText) {
+  return new Promise((resolve) => {
+    const outputPanel = document.getElementById("result");
+    const div = document.createElement("div");
+    div.className = "input-area";
+    div.innerHTML = `
+      <label>${promptText || "Input:"}
+        <input type="text" id="userInputBox" style="width: 200px;">
+        <button id="submitInput">Submit</button>
+      </label>
+    `;
+    outputPanel.appendChild(div);
+
+    document.getElementById("submitInput").onclick = () => {
+      const value = document.getElementById("userInputBox").value;
+      div.remove();
+      resolve(value);
+    };
+  });
+};
+
+async function runCode() {
+  if (!currentTab || !openTabs[currentTab]) {
+    alert("No file to execute!");
+    return;
+  }
+
+  await loadPyodideAndPackages(); // Load Pyodide once
+  const content = openTabs[currentTab].model.getValue();
+  const outputPanel = document.getElementById("result");
+  outputPanel.textContent = ""; // Clear output
+
+self.pyodide.setStdout({
+  batched: (text) => outputPanel.textContent += text + "\n",
+});
+self.pyodide.setStderr({
+  batched: (text) => outputPanel.textContent += text + "\n",
+});
+
+
+<!--  self.pyodide.globals.set("input", customInput);-->
+async function overrideInput() {
+  await pyodide.runPythonAsync(`
+import asyncio
+async def input(prompt=""):
+    from js import customInput
+    return await customInput(prompt)
+  `);
+  pyodide.globals.set("input", pyodide.globals.get("input"));
+    }
+
+  try {
+    await self.pyodide.runPythonAsync(content);
+  } catch (err) {
+    outputPanel.textContent += `\nError: ${err}`;
+  }
+}
+
+
+
+
+
+
+window.saveCurrentFile = function () {
+  if (!currentTab || !openTabs[currentTab]) {
+    alert("No file open to save!");
+    return;
+  }
+
+  const content = openTabs[currentTab].model.getValue();
+  fetch('/new-content', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename: currentTab, content })
+  })
+    .then(res => res.text())
+    .then(msg => alert("File saved."));
+};
+
+// Attach auto-save triggers
+function setupAutoSaveForEditor(editor, filename) {
+  let saveTimeout;
+
+  function autoSave() {
+    const content = editor.getValue();
+    fetch('/new-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, content })
+    }).catch(err => {
+      console.error("Auto-save failed:", err);
+    });
+  }
+
+  // Save on cursor move or content change (debounced to avoid spam)
+  const triggerSave = () => {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(autoSave, 1000); // waits 1 sec after last event
+  };
+
+  editor.onDidChangeCursorPosition(triggerSave);
+  editor.onDidChangeModelContent(triggerSave);
+}
+
+
+window.loadFileContent = function (filename) {
+  fetch('/load-content', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "success") {
+        createTab(filename, data.content);
+      } else {
+        alert(data.message || "File not found");
+      }
+    })
+    .catch(err => {
+      console.error("Error loading file:", err);
+      alert("Could not load file.");
+    });
+};
+
+    <!--me trying changes here 8th june-->
+    const dragbar = document.getElementById('dragbar');
+    const editorDiv = document.getElementById('code-editor');
+    const outputDiv = document.getElementById('output-panel');
+    const container = document.querySelector('.resizable-container');
+
+    dragbar.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      document.addEventListener('mousemove', resizeEditor);
+      document.addEventListener('mouseup', stopResize);
+    });
+
+function resizeEditor(e) {
+  const containerTop = container.getBoundingClientRect().top;
+  const containerHeight = container.getBoundingClientRect().height;
+  let newEditorHeight = e.clientY - containerTop;
+
+  // Optional: Clamp values
+  const minEditorHeight = 100;
+  const maxEditorHeight = containerHeight - 100;
+  newEditorHeight = Math.min(Math.max(newEditorHeight, minEditorHeight), maxEditorHeight);
+
+  editorDiv.style.height = newEditorHeight + 'px';
+  outputDiv.style.height = (containerHeight - newEditorHeight - 10) + 'px';
+}
+
+function stopResize() {
+  document.removeEventListener('mousemove', resizeEditor);
+  document.removeEventListener('mouseup', stopResize);
+}
+
+
+
+
+
+  function toggleUserMenu() {
+    const dropdown = document.getElementById("user-dropdown");
+    dropdown.classList.toggle("hidden");
+    document.addEventListener("click", function handler(e) {
+      if (!dropdown.contains(e.target) && !e.target.classList.contains("avatar-icon")) {
+        dropdown.classList.add("hidden");
+        document.removeEventListener("click", handler);
+      }
+    });
+  }
+
+
+
+
+
+
+
+// Initialize Lucide icons
+lucide.createIcons();
+
+</script>
+    <div id="ai-loader" style="display: none;">
+      <div class="spinner"></div>
+      <p>Thinking...</p>
+    </div>
+
+
+<script>
+   function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+    const themeBtn = document.getElementById("themeToggleBtn");
+    themeBtn.innerHTML = isDark ? "☀️ Light" : "🌙 Dark";
+  }
+
+  window.onload = () => {
+    const theme = localStorage.getItem('theme');
+    const isDark = theme === 'dark';
+    if (isDark) document.body.classList.add('dark');
+
+    // Set initial icon
+    const themeBtn = document.getElementById("themeToggleBtn");
+    if (themeBtn) {
+      themeBtn.innerHTML = isDark ? "☀️ Light" : "🌙 Dark";
+    }
+  };
+</script>
+
+
+</body>
+</html>

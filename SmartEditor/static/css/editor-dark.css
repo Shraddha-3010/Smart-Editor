@@ -1,0 +1,98 @@
+body {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+}
+
+.editor-container {
+  display: flex;
+  height: 100vh;
+}
+
+.left-panel,
+.right-panel {
+  background-color: #2d2d2d;
+  color: #d4d4d4;
+  padding: 10px;
+  width: 200px;
+  overflow-y: auto;
+}
+
+.left-panel ul li {
+  cursor: pointer;
+  padding: 5px;
+  color: #fff;
+}
+
+.left-panel ul li:hover {
+  background-color: #444;
+}
+
+.middle-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #1e1e1e;
+}
+
+.tab-bar {
+  display: flex;
+  padding: 5px;
+  background-color: #2b2b2b;
+  color: #ffffff;
+}
+
+.tab {
+  margin-right: 5px;
+  padding: 5px 10px;
+  background-color: #3b3b3b;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+.tab.active {
+  background-color: #007acc;
+  color: white;
+}
+
+#run-button {
+  margin: 5px;
+}
+
+.dragbar {
+  height: 5px;
+  background-color: #555;
+  cursor: row-resize;
+}
+
+#output-panel {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border-top: 1px solid #333;
+  padding: 10px;
+  font-family: monospace;
+}
+
+#ai-response {
+  background-color: #2d2d2d;
+  color: #d4d4d4;
+  padding: 10px;
+}
+
+textarea, input[type="text"] {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #444;
+}
+
+button {
+  background-color: #444;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #555;
+}

@@ -1,0 +1,151 @@
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Fira Code', monospace;
+}
+
+body {
+  height: 100vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0,0,0,0.7)),
+              url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-card {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.07);
+  padding: 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Title */
+.title {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 30px;
+  color: #00e0ff;
+  font-weight: bold;
+}
+
+/* Fields */
+.field {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 2px solid #00e0ff;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: 0.3s;
+}
+
+.field input:focus {
+  border-color: #ff4f81;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.field label {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bbb;
+  transition: 0.3s;
+  pointer-events: none;
+}
+
+.field input:focus + label,
+.field input:not(:placeholder-shown):valid + label {
+  top: -10px;
+  left: 10px;
+  font-size: 0.8rem;
+  color: #00e0ff;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 0 5px;
+  border-radius: 5px;
+}
+
+/* Content Row */
+.content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.checkbox label,
+.pass-link a {
+  color: #ccc;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.pass-link a:hover {
+  color: #ff4f81;
+}
+
+/* Buttons */
+.login-btn {
+  width: 100%;
+  background-color: #00e0ff;
+  border: none;
+  color: #000;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.login-btn:hover {
+  background-color: #00b8d4;
+  transform: translateY(-2px);
+}
+
+/* Signup Link */
+.signup-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.signup-link a {
+  color: #00e0ff;
+  text-decoration: underline;
+}
+
+.signup-link a:hover {
+  color: #ff4f81;
+}
+
+/* Alert Message */
+.alert {
+  background-color: #ff4f81;
+  color: white;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  text-align: center;
+}

@@ -1,0 +1,142 @@
+/* Reset and Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Fira Code', monospace;
+}
+
+body {
+    height: 100vh;
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0,0,0,0.7)),
+                url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Wrapper / Card */
+.wrapper {
+    width: 100%;
+    max-width: 400px;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.07);
+    padding: 40px 30px;
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.6s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Title */
+.wrapper h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 30px;
+    color: #00e0ff;
+    font-weight: bold;
+}
+
+/* Input Fields */
+.input-box {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.input-box input {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 2px solid #00e0ff;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.3s;
+}
+
+.input-box input:focus {
+    border-color: #ff4f81;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Placeholder Text */
+.input-box input::placeholder {
+    color: #bbb;
+}
+
+/* Terms / Policy */
+.policy {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.policy input {
+    margin-right: 10px;
+}
+
+.policy h2 {
+    font-size: 13px;
+    font-weight: normal;
+    color: #ccc;
+}
+
+/* Submit Button */
+.input-box.button input[type="submit"] {
+    background-color: #00e0ff;
+    color: #000;
+    border: none;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 12px;
+    width: 100%;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.input-box.button input[type="submit"]:hover {
+    background-color: #00b8d4;
+    transform: translateY(-2px);
+}
+
+/* Login Link */
+.text {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.text h3 {
+    font-size: 0.9rem;
+    color: #ccc;
+    font-weight: normal;
+}
+
+.text a {
+    color: #00e0ff;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.text a:hover {
+    color: #ff4f81;
+}
+
+/* Optional Alert Styling (if needed) */
+.alert {
+    background-color: #ff4f81;
+    color: white;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    text-align: center;
+}

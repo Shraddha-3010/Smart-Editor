@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Editor - Home</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styleindex.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="homepage-container">
+    <div class="homepage-card">
+      <h1 class="homepage-title"> Smart Code Editor</h1>
+      <p class="homepage-subtext">Build, edit, and run your code smarter and faster!</p>
+
+      <nav class="nav-buttons">
+        <a href="/login" class="nav-btn">Login</a>
+<!--        <a href="/register" class="nav-btn secondary">Register</a>-->
+      </nav>
+
+      <div class="cta">
+        <p class="signup-text">
+          Don’t have an account?
+          <a href="/register">Register here</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="ai-loader" style="display: none;">
+    <div class="spinner"></div>
+    <p>AI is processing...</p>
+  </div>
+
+
+</body>
+</html>
