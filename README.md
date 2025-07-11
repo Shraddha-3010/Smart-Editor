@@ -1,2 +1,2 @@
 # Smart-Editor
-it's an coding complier using generative ai
+it's a coding editor using generative ai
